@@ -3,6 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import axios from 'axios';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faTree, faCircle, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { icon } from '@fortawesome/fontawesome-svg-core';
 
 // Corrigindo o problema do ícone do marcador
 delete L.Icon.Default.prototype._getIconUrl;
@@ -45,11 +48,32 @@ const MapComponent = () => {
     const [address, setAddress] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [searchLocation, setSearchLocation] = useState(null);
+    library.add(faTree, faCircle, faMapMarkerAlt);
+
+
+
+    const treeIcon = L.divIcon({
+        className: 'my-custom-icon text-green-500 w-10 h-10 text-2xl',
+        html: icon({ prefix: 'fas', iconName: 'tree' }).html,
+        iconSize: [25, 25]
+    });
+
+    const userIcon = L.divIcon({
+        className: 'my-custom-icon text-blue-500 w-10 h-10 text-2xl',
+        html: icon({ prefix: 'fas', iconName: 'circle' }).html,
+        iconSize: [25, 25]
+    });
+
+    const searchIcon = L.divIcon({
+        className: 'my-custom-icon text-red-500 w-10 h-10 text-2xl',
+        html: icon({ prefix: 'fas', iconName: 'map-marker-alt' }).html,
+        iconSize: [25, 25]
+    });
 
     const mapRef = useRef();
 
     const search = async (address) => {
-        const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${address}`);
+        const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${address}, Brasília, DF`);
         setSuggestions(response.data);
     };
 
@@ -98,7 +122,7 @@ const MapComponent = () => {
                     />
                     <div className='bg-white space-y-2 overflow-auto max-h-80 mx-2'>
                         {suggestions.map(suggestion => (
-                            <div className='cursor-pointer border-b bg-white my-2'
+                            <div className='cursor-pointer border-b bg-white my-2 mx-4'
                                 key={suggestion.place_id} onClick={() => handleSelect(suggestion)}>
                                 {suggestion.display_name.split(',').slice(0, 2).join(',')}
                             </div>
@@ -111,20 +135,22 @@ const MapComponent = () => {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
-                        <Marker position={location}>
+                        <Marker position={location} icon={userIcon}>
                             <Popup>
                                 Você está aqui.
                             </Popup>
                         </Marker>
+
                         {searchLocation && (
-                            <Marker position={searchLocation}>
+                            <Marker position={searchLocation} icon={searchIcon}>
                                 <Popup>
                                     Local Pesquisado
                                 </Popup>
                             </Marker>
                         )}
+
                         {markers.map(marker => (
-                            <Marker key={marker.id} position={{ lat: marker.lat, lng: marker.lng }}>
+                            <Marker key={marker.id} position={{ lat: marker.lat, lng: marker.lng }} icon={treeIcon}>
                                 <Popup>
                                     <div>
                                         <h2>{marker.especie}</h2>
