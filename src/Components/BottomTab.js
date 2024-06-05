@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 const BottomTab = () => {
     return (
         <div className='flex justify-center items-center px-10 fixed bottom-0 w-full py-10'>
-            <div className="w-full h-10 bg-gray-500 opacity-70 rounded-full flex justify-between px-10 items-center">
+            <div className="w-full h-10 bg-gray-500 opacity-80 rounded-full flex justify-between px-10 items-center">
                 <Link to="/" className="text-white">
                     <FontAwesomeIcon icon={faHome} />
                 </Link>
