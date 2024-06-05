@@ -6,16 +6,18 @@ import { Link } from 'react-router-dom';
 
 const BottomTab = () => {
     return (
-        <div className="fixed bottom-0 w-full bg-gray-800 h-16 flex justify-around items-center z-50">
-            <Link to="/" className="text-white">
-                <FontAwesomeIcon icon={faHome} />
-            </Link>
-            <Link to="/login" className="text-white">
-                <FontAwesomeIcon icon={faUser} />
-            </Link>
-            <Link to="/config" className="text-white">
-                <FontAwesomeIcon icon={faCog} />
-            </Link>
+        <div className='flex justify-center items-center px-10 fixed bottom-0 w-full py-10'>
+            <div className="w-full h-10 bg-gray-500 opacity-70 rounded-full flex justify-between px-10 items-center">
+                <Link to="/" className="text-white">
+                    <FontAwesomeIcon icon={faHome} />
+                </Link>
+                <Link to="/login" className="text-white">
+                    <FontAwesomeIcon icon={faUser} />
+                </Link>
+                <Link to="/config" className="text-white">
+                    <FontAwesomeIcon icon={faCog} />
+                </Link>
+            </div>
         </div>
     );
 }

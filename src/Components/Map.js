@@ -11,6 +11,35 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+
+// lista com id, longitude e latitude, especie ( de arvore que da fruto), foto, ponto de referencia
+const markers = [
+    {
+        id: 1,
+        lat: -15.820544,
+        lng: -47.987511,
+        especie: 'Banana',
+        foto: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Bananas.jpg/800px-Bananas.jpg',
+        referencia: 'Perto do ponto de ônibus'
+    },
+    {
+        id: 2,
+        lat: -15.818453,
+        lng: -47.980996,
+        especie: 'Maçã',
+        foto: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/800px-Red_Apple.jpg',
+        referencia: 'Perto do ponto de ônibus'
+    },
+    {
+        id: 3,
+        lat: -15.812647,
+        lng: -47.988234,
+        especie: 'Pera',
+        foto: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Pear.jpg/800px-Pear.jpg',
+        referencia: 'Perto do ponto de ônibus'
+    }
+];
+
 const MapComponent = () => {
     const [location, setLocation] = useState(null);
 
@@ -44,6 +73,17 @@ const MapComponent = () => {
                                 Você está aqui.
                             </Popup>
                         </Marker>
+                        {markers.map(marker => (
+                            <Marker key={marker.id} position={{ lat: marker.lat, lng: marker.lng }}>
+                                <Popup>
+                                    <div>
+                                        <h2>{marker.especie}</h2>
+                                        <img src={marker.foto} alt={marker.especie} style={{ width: '100%' }} />
+                                        <p>{marker.referencia}</p>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        ))}
                     </MapContainer>
                 )}
             </div>
