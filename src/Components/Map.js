@@ -1,21 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import axios from 'axios';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { faTree, faCircle, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
-import { icon } from '@fortawesome/fontawesome-svg-core';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+// icone de luppa fontawesome
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
 
-// Corrigindo o problema do ícone do marcador
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+const containerStyle = {
+    width: '100%',
+    height: '100vh'
+};
 
-// lista com id, longitude e latitude, especie ( de arvore que da fruto), foto, ponto de referencia
 const markers = [
     {
         id: 1,
@@ -43,128 +36,131 @@ const markers = [
     }
 ];
 
-const MapComponent = () => {
-    const [location, setLocation] = useState(null);
-    const [address, setAddress] = useState("");
-    const [suggestions, setSuggestions] = useState([]);
-    const [searchLocation, setSearchLocation] = useState(null);
-    library.add(faTree, faCircle, faMapMarkerAlt);
-
-
-
-    const treeIcon = L.divIcon({
-        className: 'my-custom-icon text-green-500 w-10 h-10 text-2xl',
-        html: icon({ prefix: 'fas', iconName: 'tree' }).html,
-        iconSize: [25, 25]
-    });
-
-    const userIcon = L.divIcon({
-        className: 'my-custom-icon text-blue-500 w-10 h-10 text-2xl',
-        html: icon({ prefix: 'fas', iconName: 'circle' }).html,
-        iconSize: [25, 25]
-    });
-
-    const searchIcon = L.divIcon({
-        className: 'my-custom-icon text-red-500 w-10 h-10 text-2xl',
-        html: icon({ prefix: 'fas', iconName: 'map-marker-alt' }).html,
-        iconSize: [25, 25]
-    });
-
-    const mapRef = useRef();
-
-    const search = async (address) => {
-        const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${address}, Brasília, DF`);
-        setSuggestions(response.data);
-    };
-
-    const handleSelect = (place) => {
-        setSearchLocation({
-            lat: parseFloat(place.lat),
-            lng: parseFloat(place.lon)
-        });
-        setAddress(place.display_name);
-
-        // Limpar a lista de sugestões
-        setSuggestions([]);
-
-        // Definir a localização do mapa para o local selecionado
-        mapRef.current.flyTo([parseFloat(place.lat), parseFloat(place.lon)], 18);
-    };
-
-    useEffect(() => {
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                setLocation({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                });
-            },
-            (error) => {
-                console.error("Error watching position: ", error);
-            }
-        );
-
-        return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
-
-    return (
-        <div className='relative h-full w-full'>
-            <div className='absolute top-0 bottom-16 left-0 right-0'>
-                <div className='fixed top-0 w-full top-8 px-10 py-2 opacity-80 '>
-                    <input
-                        className='w-full rounded-xl px-2 py-2 shadow-xl'
-                        value={address}
-                        onChange={(e) => {
-                            setAddress(e.target.value);
-                            search(e.target.value);
-                        }}
-                        placeholder="Digite um endereço"
-                    />
-                    <div className='bg-white space-y-2 overflow-auto max-h-80 mx-2'>
-                        {suggestions.map(suggestion => (
-                            <div className='cursor-pointer border-b bg-white my-2 mx-4'
-                                key={suggestion.place_id} onClick={() => handleSelect(suggestion)}>
-                                {suggestion.display_name.split(',').slice(0, 2).join(',')}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                {location && (
-                    <MapContainer ref={mapRef} center={location} zoom={20} className='w-full h-screen -z-10'>
-                        <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        />
-                        <Marker position={location} icon={userIcon}>
-                            <Popup>
-                                Você está aqui.
-                            </Popup>
-                        </Marker>
-
-                        {searchLocation && (
-                            <Marker position={searchLocation} icon={searchIcon}>
-                                <Popup>
-                                    Local Pesquisado
-                                </Popup>
-                            </Marker>
-                        )}
-
-                        {markers.map(marker => (
-                            <Marker key={marker.id} position={{ lat: marker.lat, lng: marker.lng }} icon={treeIcon}>
-                                <Popup>
-                                    <div>
-                                        <h2>{marker.especie}</h2>
-                                        <img src={marker.foto} alt={marker.especie} style={{ width: '100%' }} />
-                                        <p>{marker.referencia}</p>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        ))}
-                    </MapContainer>
-                )}
-            </div>
-        </div>
-    );
+const apiOptions = {
+    id: 'google-map-script',
+    googleMapsApiKey: "AIzaSyC9sG2Y0ecW43vZXH09Q-FZwox7q4XWExA", // Substitua pela sua chave de API do Google Maps
+    libraries: ['places'] // Adiciona a biblioteca Places
 };
 
-export default MapComponent;
+function Map() {
+    const { isLoaded } = useJsApiLoader(apiOptions);
+
+    const [map, setMap] = useState(null);
+    const [center, setCenter] = useState({ lat: -3.745, lng: -38.523 }); // valores padrão
+    const [location, setLocation] = useState(null); // Estado para armazenar a localização do usuário
+    const [selectedMarker, setSelectedMarker] = useState(null);
+    const searchBoxRef = useRef(null); // Referência para o input de pesquisa
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setCenter({ lat: latitude, lng: longitude });
+                    setLocation({ lat: latitude, lng: longitude }); // Atualiza a localização do usuário
+                },
+                () => {
+                    console.error("Error fetching location");
+                }
+            );
+        }
+    }, []);
+
+    const onLoad = useCallback(function callback(map) {
+        setMap(map);
+    }, []);
+
+    const onUnmount = useCallback(function callback(map) {
+        setMap(null);
+    }, []);
+
+    const handleSearch = () => {
+        const input = searchBoxRef.current.value;
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address: input }, (results, status) => {
+            if (status === 'OK') {
+                const { lat, lng } = results[0].geometry.location;
+                setCenter({ lat: lat(), lng: lng() });
+                map.panTo({ lat: lat(), lng: lng() });
+            } else {
+                alert('Geocode was not successful for the following reason: ' + status);
+            }
+        });
+    };
+
+    return isLoaded ? (
+        <div>
+            <div className='w-full absolute z-10 p-10 flex justify-center items-center'>
+                <div className='bg-white py-2 px-8 rounded-full flex w-full justify-between opacity-80'>
+                    <input
+                        type="text"
+                        ref={searchBoxRef}
+                        placeholder="Pesquisar o lugar..."
+                        className='focus:outline-none w-full'
+
+                    ></input>
+                    <button onClick={handleSearch} className='flex bg-gray-200 p-2 rounded-full hover:bg-gray-300'>
+                        <FontAwesomeIcon icon={faSearch} className='w-5 h-5' />
+                    </button>
+                </div>
+            </div>
+            <GoogleMap
+                mapContainerStyle={containerStyle}
+                center={center}
+                zoom={15}
+                onLoad={onLoad}
+                onUnmount={onUnmount}
+                options={{
+                    disableDefaultUI: true,
+                    zoomControl: false,
+                    styles: [
+                        {
+                            featureType: 'poi',
+                            elementType: 'labels',
+                            stylers: [{ visibility: 'off' }]
+                        }
+                    ]
+                }}
+            >
+                {location && (
+                    <Marker
+                        position={location}
+                        icon={{
+                            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                        }}
+                    />
+                )}
+
+                {markers.map((marker) => (
+                    <Marker
+                        key={marker.id}
+                        position={{ lat: marker.lat, lng: marker.lng }}
+                        icon={{
+                            url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                        }}
+                        onClick={() => {
+                            setSelectedMarker(marker);
+                        }}
+                    />
+                ))}
+
+                {selectedMarker && (
+                    <InfoWindow
+                        position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
+                        onCloseClick={() => {
+                            setSelectedMarker(null);
+                        }}
+                    >
+                        <div>
+                            <h2>{selectedMarker.especie}</h2>
+                            <p>{selectedMarker.referencia}</p>
+                            <img src={selectedMarker.foto} alt={selectedMarker.especie} style={{ width: '100px' }} />
+                        </div>
+                    </InfoWindow>
+                )}
+            </GoogleMap>
+        </div>
+    ) : <></>;
+}
+
+export default Map;
